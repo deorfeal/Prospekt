@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prospect</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #080808;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+svg.prospect {
+  overflow: visible;
+  display: block;
+  width: 90vw;
+  height: auto;
+}
+
+svg.prospect text {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 400px;
+  font-weight: 400;
+  letter-spacing: 8px;
+}
+
+.solid {
+  fill: #ffffff;
+  opacity: 0;
+}
+
+.drawn {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 3px;
+  stroke-linecap: butt;
+  stroke-linejoin: miter;
+}
+</style>
+</head>
+<body>
+
+<svg class="prospect" viewBox="0 0 2200 420">
+  <text class="solid" id="solid" x="0" y="380">PROSPECT</text>
+  <text class="drawn" id="drawn" x="0" y="380">PROSPECT</text>
+</svg>
+
+<script>
+(function() {
+  const drawn = document.getElementById('drawn');
+  const solid = document.getElementById('solid');
+
+  document.fonts.ready.then(() => {
+    const textW = drawn.getComputedTextLength();
+    const strokeLen = Math.ceil(textW * 2.8);
+
+    drawn.style.strokeDasharray  = strokeLen;
+    drawn.style.strokeDashoffset = strokeLen;
+
+    const DRAW_MS = 6000;
+    const FILL_DELAY_MS = 2400; // ← выставляй сюда
+    const FILL_MS = 500;
+    const HOLD_MS = 1000;
+    const FADE_MS = 600;
+
+    function ease(t) {
+      return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2) / 2;
+    }
+
+    function run() {
+      // Reset
+      drawn.style.opacity = 1;
+      drawn.style.strokeDashoffset = strokeLen;
+      solid.style.transition = 'none';
+      solid.style.opacity = 0;
+
+      // Animate stroke
+      const start = performance.now();
+      function strokeFrame(now) {
+        const t = Math.min((now - start) / DRAW_MS, 1);
+        drawn.style.strokeDashoffset = strokeLen * (1 - ease(t));
+        if (t < 1) requestAnimationFrame(strokeFrame);
+      }
+      requestAnimationFrame(strokeFrame);
+
+      // Fill after delay
+      setTimeout(() => {
+        solid.style.transition = `opacity ${FILL_MS}ms ease`;
+        solid.style.opacity = 1;
+      }, FILL_DELAY_MS);
+
+      // Fade out everything
+      setTimeout(() => {
+        drawn.style.transition = `opacity ${FADE_MS}ms ease`;
+        solid.style.transition = `opacity ${FADE_MS}ms ease`;
+        drawn.style.opacity = 0;
+        solid.style.opacity = 0;
+
+        setTimeout(() => {
+          drawn.style.transition = 'none';
+          solid.style.transition = 'none';
+          run();
+        }, FADE_MS);
+
+      }, FILL_DELAY_MS + FILL_MS + HOLD_MS);
+    }
+
+    run();
+  });
+})();
+</script>
+</body>
+</html>
