@@ -1,44 +1,362 @@
-// Aos - the right initialisation
 document.addEventListener("DOMContentLoaded", function () {
+  // ── AOS ──────────────────────────────────────────────────────────────────
   if (document.querySelector(".preloader")) {
     const preloader = document.querySelector(".preloader");
-
-    // время анимации SVG (3s) + небольшая пауза
     const animationTime = 3000;
 
     setTimeout(() => {
-      // добавляем класс для плавного исчезновения
       preloader.classList.add("hide");
 
-      // ждём пока opacity-анимация закончится
       setTimeout(() => {
         preloader.style.display = "none";
 
-        // запуск AOS после полного скрытия
         AOS.init({
           duration: 750,
           offset: 0,
           anchorPlacement: "top-bottom",
         });
-      }, 600); // должно совпадать с transition в CSS
+
+        initScrollLayers();
+      }, 600);
     }, animationTime);
   } else {
-    // // Aos - the right initialisation
     jQuery(document).ready(function () {
       (function () {
-        // your page initialization code here
-        // the DOM will be available here
         AOS.init({
           duration: 750,
-          offset: 0, // offset (in px) from the original trigger point
-          anchorPlacement: "top-bottom", // define where the AOS animations will be triggered
+          offset: 0,
+          anchorPlacement: "top-bottom",
         });
       })();
     });
-    // // //
+
+    setTimeout(initScrollLayers, 100);
+  }
+
+  // ── GSAP ScrollTrigger ────────────────────────────────────────────────────
+  function initScrollLayers() {
+    if (!document.querySelector("#last")) return;
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    const banner = document.getElementById("banner");
+    const contact = document.getElementById("contact");
+
+    gsap.set(contact, {
+      position: "absolute",
+      top: "100%",
+      left: 0,
+      width: "100%",
+      zIndex: 2,
+    });
+
+    gsap.set("#last", { position: "relative" });
+
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: "#last",
+        start: "top top",
+        end: "+=100%",
+        pin: true,
+        scrub: 1,
+        anticipatePin: 1,
+      },
+    });
+
+    tl.fromTo(contact, { yPercent: 0 }, { yPercent: -100, ease: "none" });
+
+    tl.to(banner, { yPercent: -15, opacity: 0.3, ease: "none" }, 0);
+
+    window.addEventListener("load", () => {
+      ScrollTrigger.refresh();
+    });
   }
 });
-// //
+
+//
+
+// ── UTILS ──────────────────────────────────────────────────────────────────
+function closeAll(except) {
+  document.querySelectorAll(".custom-select--open").forEach((el) => {
+    if (el !== except) el.classList.remove("custom-select--open");
+  });
+}
+
+// ── SIMPLE SELECT ──────────────────────────────────────────────────────────
+document.querySelectorAll(".custom-select").forEach((select) => {
+  if (!select.querySelector(".custom-select__dropdown")) return;
+
+  const trigger = select.querySelector(".custom-select__trigger");
+  const dropdown = select.querySelector(".custom-select__dropdown");
+  const valueEl = select.querySelector(".custom-select__value");
+  if (!valueEl) return;
+
+  trigger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = select.classList.contains("custom-select--open");
+    closeAll();
+    if (!isOpen) select.classList.add("custom-select--open");
+  });
+
+  dropdown.querySelectorAll(".custom-select__option").forEach((opt) => {
+    opt.addEventListener("click", () => {
+      dropdown
+        .querySelectorAll(".custom-select__option")
+        .forEach((o) => o.classList.remove("selected"));
+      opt.classList.add("selected");
+      valueEl.textContent = opt.textContent;
+      trigger.classList.add("has-value");
+      select.classList.remove("custom-select--open");
+    });
+  });
+});
+
+// ── DATEPICKER ─────────────────────────────────────────────────────────────
+(function () {
+  const wrap = document.getElementById("datepicker");
+  const trigger = document.getElementById("datepicker-trigger");
+  const valueEl = document.getElementById("datepicker-value");
+  const monthLabel = document.getElementById("dp-month-label");
+  const grid = document.getElementById("dp-grid");
+  const prevBtn = document.getElementById("dp-prev");
+  const nextBtn = document.getElementById("dp-next");
+
+  const today = new Date();
+  let current = new Date(today.getFullYear(), today.getMonth(), 1);
+  let selectedDate = null;
+
+  const MONTHS = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  const DAYS = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
+
+  function renderCalendar() {
+    monthLabel.textContent = `${MONTHS[current.getMonth()]} ${current.getFullYear()}`;
+    grid.innerHTML = "";
+
+    DAYS.forEach((d) => {
+      const el = document.createElement("div");
+      el.className = "datepicker__day-name";
+      el.textContent = d;
+      grid.appendChild(el);
+    });
+
+    const firstDay = new Date(
+      current.getFullYear(),
+      current.getMonth(),
+      1,
+    ).getDay();
+    const daysInMonth = new Date(
+      current.getFullYear(),
+      current.getMonth() + 1,
+      0,
+    ).getDate();
+    const daysInPrev = new Date(
+      current.getFullYear(),
+      current.getMonth(),
+      0,
+    ).getDate();
+
+    for (let i = firstDay - 1; i >= 0; i--) {
+      const el = document.createElement("div");
+      el.className = "datepicker__day other-month";
+      el.textContent = daysInPrev - i;
+      grid.appendChild(el);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const el = document.createElement("div");
+      el.className = "datepicker__day";
+      el.textContent = d;
+
+      const thisDate = new Date(current.getFullYear(), current.getMonth(), d);
+      if (thisDate.toDateString() === today.toDateString())
+        el.classList.add("today");
+      if (
+        selectedDate &&
+        thisDate.toDateString() === selectedDate.toDateString()
+      )
+        el.classList.add("selected");
+
+      el.addEventListener("click", () => {
+        selectedDate = thisDate;
+        const formatted = `${MONTHS[thisDate.getMonth()].slice(0, 3)} ${thisDate.getDate()}, ${thisDate.getFullYear()}`;
+        valueEl.textContent = formatted;
+        trigger.classList.add("has-value");
+        renderCalendar();
+        wrap.classList.remove("custom-select--open");
+      });
+
+      grid.appendChild(el);
+    }
+
+    const total = firstDay + daysInMonth;
+    const remainder = total % 7 === 0 ? 0 : 7 - (total % 7);
+    for (let d = 1; d <= remainder; d++) {
+      const el = document.createElement("div");
+      el.className = "datepicker__day other-month";
+      el.textContent = d;
+      grid.appendChild(el);
+    }
+  }
+
+  trigger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = wrap.classList.contains("custom-select--open");
+    closeAll();
+    if (!isOpen) {
+      wrap.classList.add("custom-select--open");
+      renderCalendar();
+    }
+  });
+
+  prevBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    current.setMonth(current.getMonth() - 1);
+    renderCalendar();
+  });
+  nextBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    current.setMonth(current.getMonth() + 1);
+    renderCalendar();
+  });
+
+  document
+    .getElementById("datepicker-dropdown")
+    .addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+})();
+
+// ── TIMEPICKER ─────────────────────────────────────────────────────────────
+(function () {
+  const wrap = document.getElementById("timepicker");
+  const trigger = document.getElementById("timepicker-trigger");
+  const valueEl = document.getElementById("timepicker-value");
+  const hoursEl = document.getElementById("tp-hours");
+  const minutesEl = document.getElementById("tp-minutes");
+  const amBtn = document.getElementById("tp-am");
+  const pmBtn = document.getElementById("tp-pm");
+  let ampm = "PM";
+
+  function updateValue() {
+    const h = hoursEl.value.padStart(2, "0");
+    const m = minutesEl.value.padStart(2, "0");
+    valueEl.textContent = `${h}:${m} ${ampm}`;
+    trigger.classList.add("has-value");
+  }
+
+  function sanitizeTime(el, max) {
+    el.addEventListener("input", () => {
+      el.value = el.value.replace(/\D/g, "");
+      if (parseInt(el.value) > max) el.value = max;
+      updateValue();
+    });
+    el.addEventListener("blur", () => {
+      el.value = el.value.padStart(2, "0");
+    });
+  }
+
+  sanitizeTime(hoursEl, 12);
+  sanitizeTime(minutesEl, 59);
+
+  amBtn.addEventListener("click", () => {
+    ampm = "AM";
+    amBtn.classList.add("active");
+    pmBtn.classList.remove("active");
+    updateValue();
+  });
+  pmBtn.addEventListener("click", () => {
+    ampm = "PM";
+    pmBtn.classList.add("active");
+    amBtn.classList.remove("active");
+    updateValue();
+  });
+
+  trigger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = wrap.classList.contains("custom-select--open");
+    closeAll();
+    if (!isOpen) wrap.classList.add("custom-select--open");
+  });
+
+  wrap.querySelector(".timepicker__dropdown").addEventListener("click", (e) => {
+    e.stopPropagation();
+  });
+})();
+
+// ── CLOSE ON OUTSIDE CLICK ─────────────────────────────────────────────────
+document.addEventListener("click", () => closeAll());
+
+//
+
+document
+  .querySelector(".contact__form")
+  .addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const formBoxes = this.querySelectorAll(".form-box");
+    let isValid = true;
+
+    formBoxes.forEach((box) => {
+      const input = box.querySelector('input:not([type="file"]), textarea');
+      const select = box.querySelector(
+        ".custom-select__value, #datepicker-value, #timepicker-value",
+      );
+      const fileInput = box.querySelector('input[type="file"]');
+
+      let filled = false;
+
+      if (input) {
+        filled = input.value.trim() !== "";
+      } else if (select) {
+        const placeholder = ["Select a Service", "Select date", "Select time"];
+        filled = !placeholder.includes(select.textContent.trim());
+      } else if (fileInput) {
+        // upload optional — пропускаем
+        filled = true;
+      } else {
+        filled = true;
+      }
+
+      if (!filled) {
+        box.classList.add("form-box--error");
+        isValid = false;
+      } else {
+        box.classList.remove("form-box--error");
+      }
+    });
+
+    if (isValid) {
+      // отправка формы
+      console.log("Form submitted");
+    }
+  });
+
+// Снимаем ошибку при вводе
+document.querySelectorAll(".form-box").forEach((box) => {
+  // Инпуты и textarea
+  box
+    .querySelectorAll('input:not([type="file"]), textarea')
+    .forEach((input) => {
+      input.addEventListener("input", () => {
+        if (input.value.trim() !== "") box.classList.remove("form-box--error");
+      });
+    });
+});
+
+//
 
 const pageBg = document.querySelector(".page-bg");
 const menuItems = document.querySelectorAll(".menu-item");
@@ -147,6 +465,69 @@ document.querySelectorAll(".tub[data-tubs]").forEach((tab, index, tabList) => {
     }
   });
 });
+
+//
+
+// Делаем попап и скрываем по клику вне его
+$(document).ready(function () {
+  var $popup = $(".popup");
+  var $popups = {
+    connect: $(".popup--connect"),
+    request: $(".popup--request"),
+  };
+
+  // Функция для показа попапа
+  function showPopup($popupToShow) {
+    $popupToShow.addClass("popup--active").fadeIn(250, function () {
+      $(this).animate({ opacity: 1 }, 250);
+    });
+    $("body").addClass("body--popup");
+  }
+
+  // Функция для скрытия попапа
+  function hidePopup($popupToHide) {
+    $popupToHide.removeClass("popup--active").fadeOut(250, function () {
+      $(this).animate({ opacity: 1 }, 250);
+    });
+    $("body").removeClass("body--popup");
+  }
+
+  // Обработчики кликов для показа попапов
+  $(".header__link, .navigation__link").click(function (event) {
+    event.stopPropagation();
+    event.preventDefault();
+    showPopup($popups.connect);
+  });
+
+  $(".form__button").click(function (event) {
+    event.stopPropagation();
+    event.preventDefault();
+    showPopup($popups.request);
+  });
+
+  // Обработчик кликов для скрытия попапов
+  $(".cls").click(function (event) {
+    event.stopPropagation();
+    event.preventDefault();
+    hidePopup($popup);
+  });
+
+  // Скрываем попап при клике вне его области
+  $(document).click(function (event) {
+    $.each($popups, function (key, $popupToCheck) {
+      if ($popupToCheck.hasClass("popup--active")) {
+        var $popupInner = $popupToCheck.find(".popup__inner");
+        if (
+          !$popupInner.is(event.target) &&
+          $popupInner.has(event.target).length === 0
+        ) {
+          hidePopup($popupToCheck);
+        }
+      }
+    });
+  });
+});
+//
 
 //
 
@@ -1019,7 +1400,7 @@ $(function () {
     $("body").toggleClass("body--active");
   });
 
-  $(".menu__link").on("click", function (event) {
+  $(".menu-item__link").on("click", function (event) {
     $("body").toggleClass("body--active");
   });
   // $('.header-top-lang').on('click', function (event) {
