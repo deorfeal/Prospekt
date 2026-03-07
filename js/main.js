@@ -82,14 +82,12 @@ function closeAll(except) {
   });
 }
 
-// ── SIMPLE SELECT ──────────────────────────────────────────────────────────
-document.querySelectorAll(".custom-select").forEach((select) => {
-  if (!select.querySelector(".custom-select__dropdown")) return;
-
+// ── SERVICES SELECT ────────────────────────────────────────────────────────
+document.querySelectorAll(".custom-select--services").forEach((select) => {
   const trigger = select.querySelector(".custom-select__trigger");
   const dropdown = select.querySelector(".custom-select__dropdown");
   const valueEl = select.querySelector(".custom-select__value");
-  if (!valueEl) return;
+  if (!trigger || !dropdown || !valueEl) return;
 
   trigger.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -107,19 +105,30 @@ document.querySelectorAll(".custom-select").forEach((select) => {
       valueEl.textContent = opt.textContent;
       trigger.classList.add("has-value");
       select.classList.remove("custom-select--open");
+      select.closest(".form-box").classList.remove("form-box--error");
     });
   });
 });
 
 // ── DATEPICKER ─────────────────────────────────────────────────────────────
-(function () {
-  const wrap = document.getElementById("datepicker");
-  const trigger = document.getElementById("datepicker-trigger");
-  const valueEl = document.getElementById("datepicker-value");
-  const monthLabel = document.getElementById("dp-month-label");
-  const grid = document.getElementById("dp-grid");
-  const prevBtn = document.getElementById("dp-prev");
-  const nextBtn = document.getElementById("dp-next");
+document.querySelectorAll(".custom-select--datepicker").forEach((wrap) => {
+  const trigger = wrap.querySelector(".custom-select__trigger");
+  const valueEl = wrap.querySelector(".custom-select__value");
+  const monthLabel = wrap.querySelector(".datepicker__month");
+  const grid = wrap.querySelector(".datepicker__grid");
+  const prevBtn = wrap.querySelector(".datepicker__nav--prev");
+  const nextBtn = wrap.querySelector(".datepicker__nav--next");
+  const dropdown = wrap.querySelector(".datepicker__dropdown");
+  if (
+    !trigger ||
+    !valueEl ||
+    !monthLabel ||
+    !grid ||
+    !prevBtn ||
+    !nextBtn ||
+    !dropdown
+  )
+    return;
 
   const today = new Date();
   let current = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -191,11 +200,11 @@ document.querySelectorAll(".custom-select").forEach((select) => {
 
       el.addEventListener("click", () => {
         selectedDate = thisDate;
-        const formatted = `${MONTHS[thisDate.getMonth()].slice(0, 3)} ${thisDate.getDate()}, ${thisDate.getFullYear()}`;
-        valueEl.textContent = formatted;
+        valueEl.textContent = `${MONTHS[thisDate.getMonth()].slice(0, 3)} ${thisDate.getDate()}, ${thisDate.getFullYear()}`;
         trigger.classList.add("has-value");
         renderCalendar();
         wrap.classList.remove("custom-select--open");
+        wrap.closest(".form-box").classList.remove("form-box--error");
       });
 
       grid.appendChild(el);
@@ -226,41 +235,47 @@ document.querySelectorAll(".custom-select").forEach((select) => {
     current.setMonth(current.getMonth() - 1);
     renderCalendar();
   });
+
   nextBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     current.setMonth(current.getMonth() + 1);
     renderCalendar();
   });
 
-  document
-    .getElementById("datepicker-dropdown")
-    .addEventListener("click", (e) => {
-      e.stopPropagation();
-    });
-})();
+  dropdown.addEventListener("click", (e) => e.stopPropagation());
+});
 
 // ── TIMEPICKER ─────────────────────────────────────────────────────────────
-(function () {
-  const wrap = document.getElementById("timepicker");
-  const trigger = document.getElementById("timepicker-trigger");
-  const valueEl = document.getElementById("timepicker-value");
-  const hoursEl = document.getElementById("tp-hours");
-  const minutesEl = document.getElementById("tp-minutes");
-  const amBtn = document.getElementById("tp-am");
-  const pmBtn = document.getElementById("tp-pm");
+document.querySelectorAll(".custom-select--timepicker").forEach((wrap) => {
+  const trigger = wrap.querySelector(".custom-select__trigger");
+  const valueEl = wrap.querySelector(".custom-select__value");
+  const hoursEl = wrap.querySelector(".timepicker__field--hours");
+  const minutesEl = wrap.querySelector(".timepicker__field--minutes");
+  const amBtn = wrap.querySelector(".timepicker__ampm-btn--am");
+  const pmBtn = wrap.querySelector(".timepicker__ampm-btn--pm");
+  const dropdown = wrap.querySelector(".timepicker__dropdown");
+  if (
+    !trigger ||
+    !valueEl ||
+    !hoursEl ||
+    !minutesEl ||
+    !amBtn ||
+    !pmBtn ||
+    !dropdown
+  )
+    return;
+
   let ampm = "PM";
 
   function updateValue() {
-    const h = hoursEl.value.padStart(2, "0");
-    const m = minutesEl.value.padStart(2, "0");
-    valueEl.textContent = `${h}:${m} ${ampm}`;
+    valueEl.textContent = `${hoursEl.value.padStart(2, "0")}:${minutesEl.value.padStart(2, "0")} ${ampm}`;
     trigger.classList.add("has-value");
   }
 
   function sanitizeTime(el, max) {
     el.addEventListener("input", () => {
       el.value = el.value.replace(/\D/g, "");
-      if (parseInt(el.value) > max) el.value = max;
+      if (parseInt(el.value) > max) el.value = String(max);
       updateValue();
     });
     el.addEventListener("blur", () => {
@@ -277,6 +292,7 @@ document.querySelectorAll(".custom-select").forEach((select) => {
     pmBtn.classList.remove("active");
     updateValue();
   });
+
   pmBtn.addEventListener("click", () => {
     ampm = "PM";
     pmBtn.classList.add("active");
@@ -291,14 +307,11 @@ document.querySelectorAll(".custom-select").forEach((select) => {
     if (!isOpen) wrap.classList.add("custom-select--open");
   });
 
-  wrap.querySelector(".timepicker__dropdown").addEventListener("click", (e) => {
-    e.stopPropagation();
-  });
-})();
+  dropdown.addEventListener("click", (e) => e.stopPropagation());
+});
 
 // ── CLOSE ON OUTSIDE CLICK ─────────────────────────────────────────────────
 document.addEventListener("click", () => closeAll());
-
 //
 
 document
@@ -627,6 +640,40 @@ const recallsThumbs = new Swiper(".recalls-thumbs", {
   speed: 750,
   watchSlidesProgress: true,
   slideToClickedSlide: true,
+  breakpoints: {
+    301: {
+      slidesPerView: 1.75,
+      loop: true,
+      centeredSlides: true,
+      speed: 750,
+      watchSlidesProgress: true,
+      slideToClickedSlide: true,
+    },
+    551: {
+      slidesPerView: 2,
+      loop: true,
+      centeredSlides: true,
+      speed: 750,
+      watchSlidesProgress: true,
+      slideToClickedSlide: true,
+    },
+    769: {
+      slidesPerView: 3.5,
+      loop: true,
+      centeredSlides: true,
+      speed: 750,
+      watchSlidesProgress: true,
+      slideToClickedSlide: true,
+    },
+    1201: {
+      slidesPerView: 5,
+      loop: true,
+      centeredSlides: true,
+      speed: 750,
+      watchSlidesProgress: true,
+      slideToClickedSlide: true,
+    },
+  },
 });
 
 const contentSwiper = new Swiper(".recalls-swiper", {
