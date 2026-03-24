@@ -31,41 +31,58 @@ const ScrollLayers = {
     }
 
     const bannerInner = $(".banner__inner", banner);
+    const bannerWrapper = $(".banner__wrapper", banner);
     const contactInner = $(".contact__inner", contact);
+    const contactWrapper = $(".contact__wrapper", contact);
+    const lastInner = $(".last__inner", last);
 
-    if (!bannerInner || !contactInner) {
+    if (!bannerInner || !bannerWrapper || !contactInner || !contactWrapper || !lastInner) {
       console.warn("Не найдены внутренние элементы для scroll layers");
       return;
     }
 
     this.elements = {
       last,
+      lastInner,
       banner,
       contact,
       footer,
       bannerInner,
+      bannerWrapper,
       contactInner,
+      contactWrapper,
     };
 
     const getBannerScrollMax = () =>
-      Math.max(0, bannerInner.scrollHeight - banner.offsetHeight);
+      Math.max(0, bannerWrapper.scrollHeight - banner.clientHeight);
 
     const getContactScrollMax = () =>
-      Math.max(0, contactInner.scrollHeight - contact.offsetHeight);
+      Math.max(0, contactInner.scrollHeight - contact.clientHeight);
 
     const getIntroDistance = () =>
       Math.max(window.innerHeight, Math.round(window.innerWidth * 0.35));
 
     const getFooterDistance = () =>
-      Math.max(footer.offsetHeight, Math.round(window.innerHeight * 0.6));
+      Math.max(footer.offsetHeight, 1);
 
     const getTotalScroll = () =>
       getIntroDistance() + getContactScrollMax() + getFooterDistance();
 
     const applyBaseState = () => {
-      gsap.set([banner, contact, footer, bannerInner, contactInner], {
-        clearProps: "transform,opacity",
-      });
+      gsap.set(
+        [
+          banner,
+          contact,
+          footer,
+          bannerInner,
+          bannerWrapper,
+          contactInner,
+          contactWrapper,
+        ],
+        {
+          clearProps: "transform,opacity",
+        },
+      );
 
       gsap.set(contact, {
         position: "absolute",
@@ -82,22 +99,41 @@ const ScrollLayers = {
       gsap.set(last, {
         position: "relative",
         overflow: "hidden",
+        backgroundColor: "#ffffff",
+      });
+
+      gsap.set(lastInner, {
+        position: "relative",
+        height: "100%",
       });
 
       gsap.set(banner, {
         xPercent: 0,
         opacity: 1,
+        "--banner-darkness": 0,
       });
 
-      gsap.set([bannerInner, contactInner], {
+      gsap.set(contact, {
+        y: 0,
+      });
+
+      gsap.set([bannerWrapper, contactInner, contactWrapper], {
         y: 0,
       });
 
       // Футер стартует снизу и выезжает одной фазой без лишнего холостого скролла.
       gsap.set(footer, {
+        position: "absolute",
+        top: "100%",
+        left: 0,
+        width: "100%",
+        zIndex: 3,
+        force3D: true,
+        willChange: "transform",
         yPercent: 0,
-        y: getFooterDistance(),
+        y: 0,
       });
+
     };
 
     applyBaseState();
@@ -120,31 +156,82 @@ const ScrollLayers = {
       },
     });
 
+    // Каждая фаза использует реальную дистанцию, чтобы скорость анимации не "плавала"
+    // при изменении высоты контента и не появлялись холостые участки скролла.
+    const getIntroDuration = () => Math.max(1, getIntroDistance());
+    const getContactDuration = () => Math.max(1, getContactScrollMax());
+    const getFooterDuration = () => Math.max(1, getFooterDistance());
+    const introDarkenStartRatio = 0.75;
+    const introDuration = getIntroDuration();
+    const introDarkenDelay = introDuration * introDarkenStartRatio;
+    const introDarkenDuration = Math.max(
+      0.01,
+      introDuration * (1 - introDarkenStartRatio),
+    );
+    const contactDuration = getContactDuration();
+    const footerDuration = getFooterDuration();
+    const contactOverlapRatio = 0.22;
+    const getContactLeadDuration = () =>
+      Math.max(0, contactDuration * (1 - contactOverlapRatio));
+    const getContactTailDuration = () =>
+      Math.max(0, contactDuration * contactOverlapRatio);
+    const getContactLeadOffset = () =>
+      getContactScrollMax() * (1 - contactOverlapRatio);
+
     // Фаза 1 — contact налезает справа, banner уходит влево.
     // Внутренний скролл banner идёт параллельно, чтобы не создавать лишнюю "пустую" фазу.
-    tl.to(contact, { left: "0%", duration: 1 });
+    tl.to(contact, { left: "0%", duration: introDuration });
     tl.to(
       banner,
-      { xPercent: -10, opacity: 0.2, duration: 1 },
+      {
+        xPercent: -10,
+        duration: introDuration,
+      },
       0,
     );
     tl.to(
-      bannerInner,
-      { y: () => -getBannerScrollMax(), duration: 1 },
+      banner,
+      {
+        opacity: 0.2,
+        "--banner-darkness": 1,
+        duration: introDarkenDuration,
+      },
+      introDarkenDelay,
+    );
+    tl.to(
+      last,
+      {
+        backgroundColor: "#060606",
+        duration: introDarkenDuration,
+      },
+      introDarkenDelay,
+    );
+    tl.to(
+      bannerWrapper,
+      { y: () => -getBannerScrollMax(), duration: introDuration },
       0,
     );
 
-    // Фаза 2 — внутренний скролл contact только на реальную высоту контента.
+    // Фаза 2 — основной внутренний скролл contact.
     tl.to(contactInner, {
-      y: () => -getContactScrollMax(),
-      duration: 1,
+      y: () => -getContactLeadOffset(),
+      duration: getContactLeadDuration,
     });
 
-    // Фаза 3 — футер выезжает снизу одной фазой.
-    tl.to(footer, {
-      y: 0,
-      duration: 1,
+    // Фаза 3 — финальная часть contact и появление футера идут внахлёст,
+    // чтобы переход был бесшовным, как между banner и contact.
+    tl.to(contactInner, {
+      y: () => -getContactScrollMax(),
+      duration: getContactTailDuration,
     });
+    tl.to(contact, {
+      y: () => -getFooterDistance(),
+      duration: footerDuration,
+    }, "<");
+    tl.to(footer, {
+      y: () => -getFooterDistance(),
+      duration: footerDuration,
+    }, "<");
 
     this.timeline = tl;
 
@@ -186,13 +273,34 @@ const ScrollLayers = {
     }
 
     if (this.elements) {
-      const { last, banner, contact, footer, bannerInner, contactInner } =
+      const {
+        last,
+        lastInner,
+        banner,
+        contact,
+        footer,
+        bannerInner,
+        bannerWrapper,
+        contactInner,
+        contactWrapper,
+      } =
         this.elements;
 
-      gsap.set([last, banner, contact, footer, bannerInner, contactInner], {
-        clearProps:
-          "position,top,left,width,zIndex,overflow,transform,opacity,y,yPercent",
-      });
+      gsap.set(
+        [
+          last,
+          lastInner,
+          banner,
+          contact,
+          footer,
+          bannerWrapper,
+          contactWrapper,
+        ],
+        {
+          clearProps:
+            "position,top,left,width,zIndex,overflow,transform,opacity,y,yPercent",
+        },
+      );
 
       this.elements = null;
     }

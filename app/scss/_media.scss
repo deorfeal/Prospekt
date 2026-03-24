@@ -267,7 +267,9 @@
   }
 
   .contact__inner {
-    min-height: unset;
+    min-height: 100%;
+    height: auto;
+    align-items: stretch;
   }
 
   .contact__wrapper {

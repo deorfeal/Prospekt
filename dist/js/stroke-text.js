@@ -21,7 +21,7 @@
   const DEFAULTS = {
     color: "ffffff",
     glow: false,
-    duration: 4,
+    duration: 6,
     delay: 0,
   };
 
