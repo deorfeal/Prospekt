@@ -7,10 +7,81 @@ const Sliders = {
   instances: {},
 
   init() {
+    this.initPoints();
     this.initProjectPages();
     this.initProjectMobile();
     this.initReviews();
     this.initRecalls();
+  },
+
+  initPoints() {
+    const el = $(".points-list");
+    if (!el) return;
+
+    const syncPointsContent = (index) => {
+      const tabs = $$('.tub[data-tubs="points"]');
+      const contents = $$('.tub-element[data-tubs="points"]');
+
+      tabs.forEach((tab, tabIndex) => {
+        tab.classList.toggle("tub--active", tabIndex === index);
+      });
+
+      contents.forEach((content, contentIndex) => {
+        content.classList.toggle("tub-element--active", contentIndex === index);
+      });
+    };
+
+    if (!el.dataset.pointsSwiperBound) {
+      el.dataset.pointsSwiperBound = "1";
+
+      $$('.tub[data-tubs="points"]').forEach((tab, index) => {
+        tab.addEventListener("click", () => {
+          this.instances.points?.slideToLoop(index);
+        });
+      });
+    }
+
+    const initSwiper = () => {
+      if (window.innerWidth > 1200) {
+        if (this.instances.points) {
+          this.instances.points.destroy(true, true);
+          delete this.instances.points;
+        }
+        return;
+      }
+
+      if (this.instances.points) return;
+
+      this.instances.points = new Swiper(".points-list", {
+        slidesPerView: 1.3,
+        speed: CONFIG.swiper.speed,
+        spaceBetween: 20,
+        loop: true,
+        slideToClickedSlide: true,
+        watchOverflow: true,
+        breakpoints: {
+          769: {
+            slidesPerView: "auto",
+            spaceBetween: 30,
+          },
+        },
+        on: {
+          init(swiper) {
+            syncPointsContent(swiper.realIndex);
+          },
+          slideChange(swiper) {
+            syncPointsContent(swiper.realIndex);
+          },
+        },
+      });
+    };
+
+    initSwiper();
+
+    if (!this.pointsResizeHandler) {
+      this.pointsResizeHandler = initSwiper;
+      window.addEventListener("resize", this.pointsResizeHandler);
+    }
   },
 
   // Проекты (fade эффект)

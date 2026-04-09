@@ -486,7 +486,7 @@ body {
   display: none;
   &--active {
     display: block;
-    animation: showAnimation 0.5s forwards;
+    animation: showAnimation 1s forwards;
   }
 }
 

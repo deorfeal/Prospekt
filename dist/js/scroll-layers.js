@@ -113,6 +113,10 @@ const ScrollLayers = {
         "--banner-darkness": 0,
       });
 
+      gsap.set(bannerInner, {
+        opacity: 1,
+      });
+
       gsap.set(contact, {
         y: 0,
       });
@@ -194,6 +198,14 @@ const ScrollLayers = {
       {
         opacity: 0.2,
         "--banner-darkness": 1,
+        duration: introDarkenDuration,
+      },
+      introDarkenDelay,
+    );
+    tl.to(
+      bannerInner,
+      {
+        opacity: 0,
         duration: introDarkenDuration,
       },
       introDarkenDelay,

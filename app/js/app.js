@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
         Animations.initAll();
       });
     }
-    
+
     // Небольшая задержка для ScrollLayers
     setTimeout(() => {
       initApp();

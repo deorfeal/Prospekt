@@ -7,7 +7,6 @@ const Animations = {
   // Инициализация AOS
   initAOS() {
     if (typeof AOS === "undefined") return;
-    
     AOS.init(CONFIG.aos);
   },
 

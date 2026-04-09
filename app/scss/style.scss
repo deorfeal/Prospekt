@@ -286,7 +286,7 @@
 
 .advantages {
   &__inner {
-    padding: adaptive-value(55, 60) 0;
+    padding: adaptive-value(60, 90) 0 60rem 0;
     display: flex;
     align-items: center;
     min-height: 1200rem;
@@ -552,10 +552,13 @@
   overflow: hidden;
   padding-top: 165rem;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: adaptive-value(60, 30);
-  counter-reset: item;
+  position: relative;
+  .swiper-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: adaptive-value(60, 30);
+  }
+
   .tub--active {
     .points-item__digit {
       background: unset;
@@ -569,10 +572,9 @@
   }
 }
 .points-item {
-  display: flex;
-  align-items: flex-end;
-  gap: adaptive-value(40, 20);
+  position: relative;
   width: 100%;
+  height: auto;
   &:hover {
     .points-item__digit {
       background: unset;
@@ -588,13 +590,17 @@
     height: adaptive-value(3, 2);
     width: adaptive-value(40, 20);
     background: #20488c;
-    margin-bottom: 60rem;
+    position: absolute;
+    left: 0;
+    top: adaptive-value(105, 75);
   }
 
   &__inner {
     display: flex;
     flex-direction: column;
     width: 100%;
+    box-sizing: border-box;
+    padding-left: adaptive-value(80, 40);
   }
 
   &__digit {
@@ -606,17 +612,15 @@
     align-items: center;
     width: adaptive-value(60, 40);
     height: adaptive-value(60, 40);
+    min-height: adaptive-value(60, 40);
     font-size: adaptive-value(32, 24);
     line-height: adaptive-value(50, 32);
     letter-spacing: 1.6rem;
     transition: background 0.5s;
-    &::before {
-      content: counter(item);
-      counter-increment: item;
-    }
   }
 
   &__title {
+    width: 100%;
     font-family: "BebasNeue";
     font-size: adaptive-value(52, 32);
     line-height: adaptive-value(50, 30);
@@ -1307,8 +1311,10 @@
     transform: translateX(-50%) translateY(-50%);
     top: 50%;
     position: absolute;
-    width: adaptive-value(940, 480);
-    height: adaptive-value(940, 480);
+    width: auto;
+    height: adaptive-value(940, 560);
+    aspect-ratio: 1 / 1;
+    max-height: calc(100% - adaptive-value(80, 40));
     pointer-events: none;
     img {
       width: 100%;
@@ -3064,7 +3070,7 @@
 .connect {
   width: 100%;
   position: relative;
-  padding: adaptive-value(92, 24) adaptive-value(96, 15);
+  padding: adaptive-value(92, 76) adaptive-value(96, 15) adaptive-value(92, 24) adaptive-value(96, 15);
   background: #060606;
   z-index: 1;
   &__close {

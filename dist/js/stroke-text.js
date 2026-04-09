@@ -17,6 +17,12 @@
   "use strict";
 
   const SVG_NS = "http://www.w3.org/2000/svg";
+  const RESIZE_DEBOUNCE = 160;
+
+  let resizeTimer = null;
+  let resizeBound = false;
+  let observer = null;
+  const observedElements = new WeakSet();
 
   const DEFAULTS = {
     color: "ffffff",
@@ -61,6 +67,23 @@
     return document.createElementNS(SVG_NS, tag);
   }
 
+  function getSourceText(el) {
+    if (el._strokeSourceText) return el._strokeSourceText;
+
+    const directText = Array.from(el.childNodes)
+      .filter((node) => node.nodeType === Node.TEXT_NODE)
+      .map((node) => node.textContent)
+      .join(" ");
+
+    const text = (directText || el.textContent || "")
+      .replace(/[\r\n\t]/g, "")
+      .trim();
+
+    el._strokeSourceText = text;
+
+    return text;
+  }
+
   function createTextNode(text, y, fs, ls, sw, stroke) {
     const textNode = createSVGNode("text");
 
@@ -103,10 +126,29 @@
     node.style.strokeDashoffset = `${dash}`;
   }
 
+  function clearSVG(el) {
+    const currentSvg =
+      el._strokeSvg || el.querySelector('svg[data-stroke-text-svg="1"]');
+
+    (el._strokeLayers || []).forEach(({ node }) => {
+      node.getAnimations().forEach((animation) => animation.cancel());
+    });
+
+    if (currentSvg) {
+      currentSvg.remove();
+    }
+
+    delete el._strokeSvg;
+    delete el._strokeLayers;
+    delete el._strokeDuration;
+    delete el._strokeDelay;
+    delete el.dataset.strokeTextBuilt;
+  }
+
   function buildSVG(el, opts) {
     if (el.dataset.strokeTextBuilt) return;
 
-    const text = el.textContent.replace(/[\r\n\t]/g, "").trim();
+    const text = getSourceText(el);
     if (!text) return;
 
     el.dataset.strokeTextBuilt = "1";
@@ -128,6 +170,7 @@
 
     const svg = createSVGNode("svg");
     svg.setAttribute("aria-hidden", "true");
+    svg.dataset.strokeTextSvg = "1";
     svg.style.cssText =
       "position:absolute;top:0;left:0;overflow:visible;pointer-events:none;visibility:hidden;";
 
@@ -193,9 +236,18 @@
       strokeColor,
     });
 
+    el._strokeSvg = svg;
     el._strokeLayers = layers;
     el._strokeDuration = opts.duration;
     el._strokeDelay = opts.delay;
+  }
+
+  function applyFinalLayerState(layer) {
+    const { node, strokeColor } = layer;
+
+    node.getAnimations().forEach((animation) => animation.cancel());
+    node.style.stroke = strokeColor;
+    node.style.strokeDashoffset = "0";
   }
 
   function animateLayer(layer, duration, delay) {
@@ -247,32 +299,83 @@
     );
   }
 
+  function rebuildElement(el) {
+    if (!document.body.contains(el)) return;
+
+    const shouldKeepFinalState = el.dataset.strokeTextAnimated === "1";
+
+    clearSVG(el);
+    buildSVG(el, parseOpts(el));
+
+    if (!el._strokeLayers?.length) return;
+
+    if (shouldKeepFinalState) {
+      el.dataset.strokeTextAnimated = "1";
+      el._strokeLayers.forEach(applyFinalLayerState);
+      return;
+    }
+
+    delete el.dataset.strokeTextAnimated;
+  }
+
+  function rebuildBuiltElements() {
+    document
+      .querySelectorAll("[data-stroke-text][data-stroke-text-built]")
+      .forEach((el) => rebuildElement(el));
+  }
+
+  function scheduleRebuild() {
+    clearTimeout(resizeTimer);
+
+    resizeTimer = window.setTimeout(() => {
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          rebuildBuiltElements();
+        }),
+      );
+    }, RESIZE_DEBOUNCE);
+  }
+
   function init() {
     const elements = Array.from(document.querySelectorAll("[data-stroke-text]"));
     if (!elements.length) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
+    if (!observer) {
+      observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
 
-          const el = entry.target;
+            const el = entry.target;
 
-          if (!el.dataset.strokeTextBuilt) {
-            buildSVG(el, parseOpts(el));
-          }
+            if (!el.dataset.strokeTextBuilt) {
+              buildSVG(el, parseOpts(el));
+            }
 
-          animateWord(el);
-          observer.unobserve(el);
-        });
-      },
-      {
-        threshold: 0.1,
-        rootMargin: "0px 0px -30px 0px",
-      },
-    );
+            animateWord(el);
+            observer.unobserve(el);
+          });
+        },
+        {
+          threshold: 0.1,
+          rootMargin: "0px 0px -30px 0px",
+        },
+      );
+    }
 
-    elements.forEach((el) => observer.observe(el));
+    elements.forEach((el) => {
+      if (observedElements.has(el) || el.dataset.strokeTextBuilt) return;
+
+      observedElements.add(el);
+      observer.observe(el);
+    });
+
+    if (!resizeBound) {
+      resizeBound = true;
+      window.addEventListener("resize", scheduleRebuild);
+      window.addEventListener("orientationchange", scheduleRebuild);
+      window.addEventListener("load", scheduleRebuild, { once: true });
+    }
   }
 
   window.StrokeText = { init };
