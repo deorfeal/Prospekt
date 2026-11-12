@@ -1,0 +1,750 @@
+.projects {
+  position: relative;
+  z-index: 1;
+  overflow: clip;
+  &__inner {
+    position: relative;
+    min-height: 100svh;
+  }
+  &__progress {
+    position: absolute;
+    z-index: 10;
+    top: 50%;
+    transform: translateY(120rem);
+    left: 120rem;
+  }
+  &__controls {
+    display: none;
+  }
+  &__bg {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    width: 100%;
+    height: 316rem;
+    z-index: -1;
+    img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+  }
+
+  .lines__line {
+    &:nth-child(1) {
+      height: 100%;
+      top: 0;
+      left: 70rem;
+    }
+
+    &:nth-child(2) {
+      height: 300rem;
+      top: 0;
+      left: 459rem;
+    }
+
+    &:nth-child(3) {
+      height: 82rem;
+      top: 13rem;
+      left: calc(50% - 13.5rem);
+    }
+
+    &:nth-child(4) {
+      height: 313rem;
+      top: -196rem;
+      right: 486rem;
+    }
+
+    &:nth-child(5) {
+      height: 100%;
+      top: 0;
+      right: 70rem;
+    }
+  }
+}
+.progress {
+  color: #a3a3a3;
+  font-size: 14rem;
+  line-height: 24rem;
+  letter-spacing: 0.14rem;
+  pointer-events: none;
+
+  &__inner {
+    display: flex;
+    align-items: center;
+    gap: 8rem;
+  }
+
+  &__current {
+    color: #fff;
+  }
+
+  &__separator {
+    width: 28rem;
+    height: 1rem;
+    background: #a3a3a3;
+  }
+
+  &__total {
+    color: rgba(#fbfbfb, 0.75);
+  }
+}
+.projects-item {
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+.projects-titling {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: adaptive-value(20, 10);
+  position: relative;
+  max-width: 500rem;
+  padding-left: 120rem;
+  &__inner {
+    display: flex;
+    flex-direction: column;
+    gap: adaptive-value(20, 10);
+  }
+
+  &__wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  gap: adaptive-value(20, 10);
+  }
+
+  &__title {
+    font-family: "BebasNeue";
+    color: #fbfbfb;
+    font-size: adaptive-value(52, 32);
+    line-height: adaptive-value(50, 32);
+    letter-spacing: adaptive-value(2.6, 1);
+  }
+
+  &__tag {
+    font-family: "BebasNeue";
+    background: #2c58a4;
+    font-size: adaptive-value(24, 14);
+    line-height: adaptive-value(26, 16);
+    text-transform: uppercase;
+    color: #fbfbfb;
+    padding: adaptive-value(15, 8);
+  }
+
+  &__text {
+    color: #e6e6e6;
+    font-size: adaptive-value(22, 14);
+    line-height: adaptive-value(36, 20);
+  }
+}
+.project {
+  position: absolute;
+  width: adaptive-value(1314, 375);
+  height: adaptive-value(1080, 595);
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  &--first {
+    .project__stone {
+      &:nth-child(1) {
+        width: adaptive-value(72, 24);
+        height: adaptive-value(68, 23);
+        top: adaptive-value(345, 215);
+        left: adaptive-value(70, 20);
+      }
+      &:nth-child(2) {
+        width: adaptive-value(465, 236);
+        height: adaptive-value(698, 354);
+        top: adaptive-value(52, 8.5);
+        left: adaptive-value(98, -10);
+      }
+      &:nth-child(3) {
+        width: adaptive-value(532, 187);
+        height: adaptive-value(336, 118);
+        bottom: adaptive-value(12, 108);
+        left: adaptive-value(64, -9);
+        z-index: 3;
+      }
+      &:nth-child(4) {
+        width: adaptive-value(98, 36);
+        height: adaptive-value(130, 48);
+        top: adaptive-value(247, 178);
+        left: adaptive-value(466, 173);
+        z-index: 3;
+      }
+      &:nth-child(5) {
+        width: adaptive-value(60, 24);
+        height: adaptive-value(62, 25);
+        top: adaptive-value(64, 106);
+        left: adaptive-value(500, 189);
+      }
+      &:nth-child(6) {
+        width: adaptive-value(120, 28);
+        height: adaptive-value(118, 28);
+        top: adaptive-value(224, 174);
+        left: adaptive-value(576, 198);
+      }
+      &:nth-child(7) {
+        width: adaptive-value(596, 234);
+        height: adaptive-value(581, 230);
+        top: adaptive-value(68, 72);
+        right: adaptive-value(-111, -84);
+      }
+      &:nth-child(8) {
+        width: adaptive-value(378, 112);
+        height: adaptive-value(247, 73);
+        bottom: adaptive-value(-3, 121);
+        right: adaptive-value(220, 78);
+        z-index: 3;
+      }
+      &:nth-child(9) {
+        width: adaptive-value(547, 180);
+        height: adaptive-value(320, 105);
+        bottom: adaptive-value(0, 123);
+        right: adaptive-value(0, -8);
+        z-index: 3;
+      }
+    }
+  }
+  &--second {
+    .project__stone {
+      &:nth-child(1) {
+        width: adaptive-value(874, 278);
+        height: adaptive-value(512, 163);
+        left: adaptive-value(-34, -64);
+        bottom: adaptive-value(-11, 104);
+        z-index: 3;
+      }
+      &:nth-child(2) {
+        width: adaptive-value(856, 309);
+        height: adaptive-value(763, 275);
+        left: adaptive-value(34, -72);
+        top: adaptive-value(45, 116);
+      }
+      &:nth-child(3) {
+        width: adaptive-value(72, 16);
+        height: adaptive-value(69, 15);
+        left: adaptive-value(534, 98);
+        top: adaptive-value(200, 176);
+      }
+      &:nth-child(4) {
+        width: adaptive-value(598, 384);
+        height: adaptive-value(584, 375);
+        right: adaptive-value(-37, -115);
+        top: adaptive-value(-28, -25);
+      }
+      &:nth-child(5) {
+        width: adaptive-value(120, 40);
+        height: adaptive-value(132, 44);
+        right: adaptive-value(24, 3);
+        bottom: adaptive-value(392, 225);
+      }
+      &:nth-child(6) {
+        width: adaptive-value(340, 122);
+        height: adaptive-value(294, 105);
+        right: adaptive-value(230, 74);
+        bottom: adaptive-value(-25, 95);
+        z-index: 3;
+      }
+      &:nth-child(7) {
+        width: adaptive-value(539, 194);
+        height: adaptive-value(352, 126);
+        right: adaptive-value(-210, -85);
+        bottom: adaptive-value(-30, 84);
+        z-index: 3;
+      }
+    }
+  }
+  &--third {
+    .project__stone {
+      &:nth-child(1) {
+        width: adaptive-value(627, 227);
+        height: adaptive-value(651, 236);
+        left: adaptive-value(-120, -100);
+        bottom: adaptive-value(-290, 39);
+        z-index: 3;
+      }
+      &:nth-child(2) {
+        width: adaptive-value(100, 36);
+        height: adaptive-value(94, 34);
+        left: adaptive-value(230, -4);
+        bottom: adaptive-value(467, 307);
+        z-index: 3;
+      }
+      &:nth-child(3) {
+        width: adaptive-value(416, 228);
+        height: adaptive-value(511, 280);
+        left: adaptive-value(204, -58);
+        top: adaptive-value(92, 72);
+      }
+      &:nth-child(4) {
+        width: adaptive-value(44, 16);
+        height: adaptive-value(45, 16);
+        left: adaptive-value(399, 72);
+        top: adaptive-value(75, 80);
+      }
+      &:nth-child(5) {
+        width: adaptive-value(132, 54);
+        height: adaptive-value(147, 60);
+        right: adaptive-value(473, 96);
+        top: adaptive-value(160, 110);
+      }
+      &:nth-child(6) {
+        width: adaptive-value(280, 139);
+        height: adaptive-value(263, 131);
+        right: adaptive-value(91, -15);
+        top: adaptive-value(77, 112);
+      }
+      &:nth-child(7) {
+        width: adaptive-value(300, 88);
+        height: adaptive-value(407, 119);
+        right: adaptive-value(-51, -40);
+        top: adaptive-value(221, 181);
+      }
+      &:nth-child(8) {
+        width: adaptive-value(571, 215);
+        height: adaptive-value(535, 202);
+        right: adaptive-value(-40, -28);
+        bottom: adaptive-value(-213, 17);
+        z-index: 3;
+      }
+    }
+  }
+  &--fourth {
+    .project__stone {
+      &:nth-child(1) {
+        width: adaptive-value(480, 180);
+        height: adaptive-value(434, 163);
+        left: adaptive-value(0, -58);
+        bottom: adaptive-value(-12, 108);
+        z-index: 3;
+      }
+      &:nth-child(2) {
+        width: adaptive-value(120, 40);
+        height: adaptive-value(113, 38);
+        left: adaptive-value(175, 0);
+        bottom: adaptive-value(468, 277);
+        z-index: 3;
+      }
+      &:nth-child(3) {
+        width: adaptive-value(659, 340);
+        height: adaptive-value(443, 228);
+        left: adaptive-value(128, -72);
+        top: adaptive-value(36, 30);
+      }
+      &:nth-child(4) {
+        width: adaptive-value(519, 160);
+        height: adaptive-value(593, 183);
+        right: adaptive-value(6, -11);
+        top: adaptive-value(72, 106);
+      }
+      &:nth-child(5) {
+        width: adaptive-value(300, 99);
+        height: adaptive-value(267, 89);
+        right: adaptive-value(4, -12);
+        bottom: adaptive-value(350, 246);
+        z-index: 3;
+      }
+      &:nth-child(6) {
+        width: adaptive-value(671, 227);
+        height: adaptive-value(393, 133);
+        right: adaptive-value(-15, -16);
+        bottom: adaptive-value(-13, 102);
+        z-index: 3;
+      }
+    }
+  }
+  &--fifth {
+    .project__stone {
+      &:nth-child(1) {
+        width: adaptive-value(487, 164);
+        height: adaptive-value(388, 131);
+        left: adaptive-value(108, -32);
+        bottom: adaptive-value(-21, 116);
+        z-index: 3;
+      }
+      &:nth-child(2) {
+        width: adaptive-value(64, 20);
+        height: adaptive-value(65, 20);
+        bottom: adaptive-value(214, 203);
+        left: adaptive-value(362, 68);
+        z-index: 3;
+      }
+      &:nth-child(3) {
+        width: adaptive-value(502, 180);
+        height: adaptive-value(414, 149);
+        top: adaptive-value(218, 140);
+        left: adaptive-value(94, -44);
+      }
+      &:nth-child(4) {
+        width: adaptive-value(456, 220);
+        height: adaptive-value(532, 257);
+        top: adaptive-value(146, 88);
+        left: adaptive-value(93, -56);
+      }
+      &:nth-child(5) {
+        width: adaptive-value(558, 219);
+        height: adaptive-value(514, 202);
+        top: adaptive-value(32, 56);
+        right: adaptive-value(-23, -24);
+      }
+      &:nth-child(6) {
+        width: adaptive-value(563, 199);
+        height: adaptive-value(339, 120);
+        bottom: adaptive-value(-3, 95);
+        right: adaptive-value(10, -13);
+        z-index: 3;
+      }
+    }
+  }
+  &--sixth {
+    .project__stone {
+      &:nth-child(1) {
+        width: adaptive-value(519, 215);
+        height: adaptive-value(420, 174);
+        left: adaptive-value(-100, -116);
+        bottom: adaptive-value(-104, 57);
+        z-index: 3;
+      }
+      &:nth-child(2) {
+        width: adaptive-value(480, 216);
+        height: adaptive-value(721, 324);
+        left: adaptive-value(98, 1);
+        top: adaptive-value(52, 21);
+      }
+      &:nth-child(3) {
+        width: adaptive-value(59, 24);
+        height: adaptive-value(55, 22);
+        left: adaptive-value(68, 1);
+        top: adaptive-value(344, 196);
+      }
+      &:nth-child(4) {
+        width: adaptive-value(64, 20);
+        height: adaptive-value(65, 20);
+        left: adaptive-value(478, 188);
+        top: adaptive-value(90, 104);
+      }
+      &:nth-child(5) {
+        width: adaptive-value(64, 20);
+        height: adaptive-value(62, 19);
+        left: adaptive-value(464, 149);
+        top: adaptive-value(280, 174);
+        z-index: 3;
+      }
+      &:nth-child(6) {
+        width: adaptive-value(55, 28);
+        height: adaptive-value(56, 28);
+        left: adaptive-value(614, 220);
+        top: adaptive-value(232, 160);
+      }
+      &:nth-child(7) {
+        width: adaptive-value(600, 180);
+        height: adaptive-value(637, 191);
+        right: adaptive-value(-60, -24);
+        top: adaptive-value(20, 88);
+      }
+      &:nth-child(8) {
+        width: adaptive-value(120, 44);
+        height: adaptive-value(132, 48);
+        right: adaptive-value(49, -20);
+        bottom: adaptive-value(450, 292);
+        z-index: 2;
+      }
+      &:nth-child(9) {
+        width: adaptive-value(780, 313);
+        height: adaptive-value(835, 336);
+        right: adaptive-value(-245, -134);
+        bottom: adaptive-value(-503, -97);
+        z-index: 3;
+      }
+    }
+  }
+  &--seventh {
+    .project__stone {
+      &:nth-child(1) {
+        width: adaptive-value(639, 288);
+        height: adaptive-value(435, 196);
+        bottom: adaptive-value(3, 107);
+        left: adaptive-value(-180, -156);
+        z-index: 3;
+      }
+      &:nth-child(2) {
+        width: adaptive-value(80, 27);
+        height: adaptive-value(78, 27);
+        bottom: adaptive-value(491, 300);
+        left: adaptive-value(232, 8);
+        z-index: 3;
+      }
+      &:nth-child(3) {
+        width: adaptive-value(540, 224);
+        height: adaptive-value(639, 265);
+        top: adaptive-value(156, 108);
+        left: adaptive-value(-60, -108);
+      }
+      &:nth-child(4) {
+        width: adaptive-value(180, 54);
+        height: adaptive-value(163, 58);
+        top: adaptive-value(141, 84);
+        left: adaptive-value(425, 96);
+      }
+      &:nth-child(5) {
+        width: adaptive-value(539, 224);
+        height: adaptive-value(525, 218);
+        top: adaptive-value(44, 32);
+        right: adaptive-value(-34, -39);
+      }
+      &:nth-child(6) {
+        width: adaptive-value(400, 160);
+        height: adaptive-value(257, 103);
+        bottom: adaptive-value(-2, 104);
+        right: adaptive-value(33, -5);
+        z-index: 3;
+      }
+      &:nth-child(7) {
+        width: adaptive-value(439, 178);
+        height: adaptive-value(402, 163);
+        bottom: adaptive-value(-38, 88);
+        right: adaptive-value(4, -27);
+        z-index: 3;
+      }
+    }
+  }
+  &--eight {
+    .project__stone {
+      &:nth-child(1) {
+        width: adaptive-value(640, 219);
+        height: adaptive-value(475, 163);
+        bottom: adaptive-value(-23, 113);
+        left: adaptive-value(-140, -98);
+        z-index: 3;
+      }
+      &:nth-child(2) {
+        width: adaptive-value(360, 160);
+        height: adaptive-value(341, 151);
+        left: adaptive-value(188, -35);
+        top: adaptive-value(180, 135);
+      }
+      &:nth-child(3) {
+        width: adaptive-value(580, 256);
+        height: adaptive-value(466, 206);
+        right: adaptive-value(20, -35);
+        top: adaptive-value(20, 30);
+      }
+      &:nth-child(4) {
+        width: adaptive-value(680, 228);
+        height: adaptive-value(783, 263);
+        right: adaptive-value(-52, -33);
+        bottom: adaptive-value(-471, -40);
+        z-index: 3;
+      }
+    }
+  }
+  &--ninght {
+    .project__stone {
+      &:nth-child(1) {
+        width: adaptive-value(599, 211);
+        height: adaptive-value(351, 124);
+        bottom: adaptive-value(-39, 107);
+        left: adaptive-value(-200, -120);
+        z-index: 3;
+      }
+      &:nth-child(2) {
+        width: adaptive-value(400, 200);
+        height: adaptive-value(365, 183);
+        top: adaptive-value(227, 148);
+        left: adaptive-value(143, -48);
+      }
+      &:nth-child(3) {
+        width: adaptive-value(440, 212);
+        height: adaptive-value(480, 232);
+        top: adaptive-value(0, 40);
+        right: adaptive-value(7, -25);
+      }
+      &:nth-child(4) {
+        width: adaptive-value(120, 40);
+        height: adaptive-value(116, 39);
+        top: adaptive-value(364, 186);
+        right: adaptive-value(72, -3);
+        z-index: 3;
+      }
+      &:nth-child(5) {
+        width: adaptive-value(720, 263);
+        height: adaptive-value(857, 314);
+        bottom: adaptive-value(-501, -83);
+        right: adaptive-value(0, -16);
+        z-index: 3;
+      }
+    }
+  }
+  &--tenth {
+    .project__stone {
+      &:nth-child(1) {
+        width: adaptive-value(800, 279);
+        height: adaptive-value(480, 168);
+        bottom: adaptive-value(-48, 103);
+        left: adaptive-value(0, -48);
+        z-index: 3;
+      }
+      &:nth-child(2) {
+        width: adaptive-value(140, 40);
+        height: adaptive-value(135, 39);
+        left: adaptive-value(200, 8);
+        top: adaptive-value(400, 228);
+      }
+      &:nth-child(3) {
+        width: adaptive-value(320, 132);
+        height: adaptive-value(250, 103);
+        left: adaptive-value(112, -26);
+        top: adaptive-value(152, 134);
+        z-index: 3;
+      }
+      &:nth-child(4) {
+        width: adaptive-value(100, 36);
+        height: adaptive-value(110, 40);
+        left: adaptive-value(452, 85);
+        top: adaptive-value(172, 115);
+      }
+      &:nth-child(5) {
+        width: adaptive-value(540, 204);
+        height: adaptive-value(740, 280);
+        right: adaptive-value(32, -41);
+        top: adaptive-value(40, 33);
+      }
+      &:nth-child(6) {
+        width: adaptive-value(520, 180);
+        height: adaptive-value(498, 172);
+        right: adaptive-value(-30, -16);
+        bottom: adaptive-value(-145, 51);
+        z-index: 3;
+      }
+    }
+  }
+  &__stones {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  &__stone {
+    position: absolute;
+
+    > img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+  }
+
+  // Обёртки остаются целями GSAP и фиксируют область наведения.
+  &__desk,
+  &__mob {
+    --project-lift-transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    --project-lift-delay: 0s;
+
+    .project__img {
+      filter: drop-shadow(0 0 0 rgba(8, 61, 227, 0))
+        drop-shadow(0 0 0 rgba(44, 88, 164, 0));
+      transition:
+        var(--project-lift-transition) var(--project-lift-delay),
+        filter 0.45s ease var(--project-lift-delay);
+    }
+  }
+
+  &__desk {
+    --project-lift: -18rem;
+    z-index: 1;
+    position: absolute;
+    isolation: isolate;
+    width: adaptive-value(1107, 387);
+    height: adaptive-value(908, 317);
+    top: adaptive-value(0, 101);
+    right: adaptive-value(0, -22);
+  }
+
+  &__img {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  &__mob {
+    --project-lift: -28rem;
+    --project-lift-delay: 0.1s;
+    z-index: 2;
+    position: absolute;
+    isolation: isolate;
+    width: adaptive-value(366, 136);
+    height: adaptive-value(555, 207);
+    bottom: adaptive-value(2, 93);
+    right: adaptive-value(0, -21);
+  }
+
+  &__bg {
+  }
+
+  &__light {
+    width: adaptive-value(1136, 424);
+    height: adaptive-value(577, 216);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    z-index: -1;
+    border-radius: 100%;
+    background: rgba(#083de3, 45%);
+    filter: blur(219rem);
+  }
+}
+
+.skip {
+  position: absolute;
+  bottom: adaptive-value(45, 25);
+  left: 50%;
+  transform: translateX(-50%);
+  &__link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: adaptive-value(12, 6);
+    color: #a3a3a3;
+    font-size: adaptive-value(20, 14);
+    line-height: adaptive-value(32, 20);
+    transition: color 0.3s;
+    &:hover {
+      color: #e6e6e6;
+      svg {
+        path {
+          stroke: #e6e6e6;
+        }
+      }
+    }
+    svg {
+      width: adaptive-value(35, 24);
+      height: adaptive-value(35, 24);
+      path {
+        transition: stroke 0.3s;
+      }
+    }
+  }
+
+  &__line {
+    background: #20488c;
+    width: 3rem;
+    height: adaptive-value(30, 15);
+    left: 50%;
+    transform: translateX(-50%);
+    position: absolute;
+    bottom: adaptive-value(-45, -25);
+  }
+}

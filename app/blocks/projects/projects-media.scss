@@ -1,0 +1,192 @@
+@media (min-width: 768px) {
+  .projects {
+    height: 100svh;
+
+    &__inner {
+      height: 100svh;
+    }
+  }
+
+  .projects-item {
+    position: absolute;
+    inset: 0;
+    min-height: 0;
+    // Все сцены лежат друг над другом. Невидимые слои не должны забирать
+    // курсор у проекта, который полностью собран и готов к hover.
+    pointer-events: none;
+
+    &.is-active {
+      :is(.project__desk, .project__mob) {
+        pointer-events: auto;
+        cursor: pointer;
+
+        .project__img {
+          pointer-events: none;
+        }
+      }
+
+      .project:has(> :is(.project__desk, .project__mob):hover) {
+        :is(.project__desk, .project__mob) {
+          .project__img {
+            transform: translateY(var(--project-lift));
+            filter: drop-shadow(0 0 28rem rgba(8, 61, 227, 0.8))
+              drop-shadow(0 0 60rem rgba(44, 88, 164, 0.65));
+          }
+        }
+
+        .project__stone > img {
+          transform: translate(var(--project-burst-x, 0px), var(--project-burst-y, 0px));
+        }
+      }
+    }
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1200px) {
+  .project {
+    right: calc((100% - 100vw) / 2 + 15rem);
+    transform-origin: right center;
+  }
+}
+
+@media (max-width: 1200px) {
+  .projects-titling {
+    padding-left: unset;
+  }
+  .projects__progress {
+    left: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .projects {
+    --projects-art-height: #{adaptive-value(1080, 595)};
+
+    &__inner {
+      min-height: max(100svh, calc(var(--projects-art-height) + 230rem));
+      touch-action: pan-y pinch-zoom;
+    }
+
+    &__progress {
+      top: auto;
+      right: auto;
+      bottom: 32rem;
+      left: 50%;
+      z-index: 12;
+      transform: translateX(-50%);
+    }
+
+    &__controls {
+      position: absolute;
+      z-index: 12;
+      top: calc(var(--projects-art-height) + 28rem);
+      right: 0;
+      left: 0;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+
+    &__arrow {
+      display: grid;
+      width: 44rem;
+      height: 44rem;
+      padding: 0;
+      color: #2c58a4;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      place-items: center;
+      pointer-events: auto;
+      transition:
+        color 0.2s ease,
+        opacity 0.2s ease;
+
+      svg {
+        width: 21rem;
+        height: 21rem;
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 1.5;
+      }
+
+      &:disabled {
+        cursor: default;
+        opacity: 0.5;
+      }
+
+      &:not(:disabled):active {
+        color: #fbfbfb;
+      }
+    }
+
+    &__bg {
+      top: calc(var(--projects-art-height) - 190rem);
+      bottom: auto;
+
+      &::after {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          63.77% 78.24% at 75.07% 16.55%,
+          rgba(0, 0, 0, 0) 0%,
+          #000 100%
+        );
+        content: "";
+        pointer-events: none;
+      }
+    }
+
+    &__skip,
+    &__lines {
+      display: none;
+    }
+  }
+
+  .projects-item {
+    position: absolute;
+    inset: 0;
+    min-height: 0;
+    pointer-events: none;
+
+    &.is-active {
+      pointer-events: auto;
+    }
+  }
+
+  .projects-titling {
+    position: absolute;
+    top: calc(var(--projects-art-height) - 5rem);
+    left: 0;
+    width: 100%;
+    max-width: none;
+    padding: 0 44rem;
+    justify-content: center;
+    text-align: center;
+
+    &__inner,
+    &__wrapper {
+      align-items: center;
+    }
+
+    &__inner[data-aos] {
+      transform: none;
+      transition-property: opacity;
+    }
+  }
+
+  .project {
+    top: calc(var(--projects-art-height) / 2 + 50rem);
+    right: auto;
+    left: 50%;
+    margin-left: calc(adaptive-value(1314, 375) / -2);
+  }
+
+  .project__stones[data-aos],
+  .project__stones[data-aos].aos-animate {
+    opacity: 1;
+    transform: none;
+  }
+}

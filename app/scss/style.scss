@@ -626,12 +626,12 @@
     line-height: adaptive-value(50, 30);
     letter-spacing: adaptive-value(2.6, 1);
     color: #ffffff;
-    padding: 25rem 0 20rem 0;
+    padding: 25rem 15rem 20rem 0;
     z-index: 1;
     position: relative;
     &::before {
       content: "";
-      width: calc(100% + adaptive-value(80, 40));
+      width: calc(100% + adaptive-value(100, 40));
       position: absolute;
       top: 0;
       bottom: 0;
@@ -3070,7 +3070,8 @@
 .connect {
   width: 100%;
   position: relative;
-  padding: adaptive-value(92, 76) adaptive-value(96, 15) adaptive-value(92, 24) adaptive-value(96, 15);
+  padding: adaptive-value(92, 76) adaptive-value(96, 15) adaptive-value(92, 24)
+    adaptive-value(96, 15);
   background: #060606;
   z-index: 1;
   &__close {
@@ -3205,4 +3206,9 @@
   }
 }
 
+@import "../blocks/projects/projects";
+
+//
+
 @import "media";
+@import "../blocks/projects/projects-media";

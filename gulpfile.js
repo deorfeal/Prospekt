@@ -9,6 +9,9 @@ const del = require("del");
 const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs').promises;
+const { readFileSync } = require('fs');
+const { createHash } = require('crypto');
+const { Transform } = require('stream');
 
 function browsersync() {
   browserSync.init({
@@ -23,17 +26,24 @@ function cleanDist() {
 }
 
 async function images() {
-  const imageFiles = await getImageFiles('app/images');
+  await Promise.all([
+    copyImages('app/images', 'dist/images'),
+    copyImages('app/blocks', 'dist/blocks'),
+  ]);
+}
+
+async function copyImages(sourceDir, outputDir) {
+  const imageFiles = await getImageFiles(sourceDir);
   
   for (const filePath of imageFiles) {
     const ext = path.extname(filePath).toLowerCase();
-    const outputPath = filePath.replace('app/images', 'dist/images');
+    const outputPath = path.join(outputDir, path.relative(sourceDir, filePath));
     
     // Создаем папку если не существует
     await fs.mkdir(path.dirname(outputPath), { recursive: true });
     
-    if (ext === '.svg') {
-      // SVG просто копируем
+    if (ext === '.svg' || (sourceDir === 'app/blocks' && ext === '.webp')) {
+      // SVG и готовые WebP блоков копируем без повторного сжатия
       await fs.copyFile(filePath, outputPath);
     } else if (['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) {
       // Остальные минифицируем через Sharp
@@ -93,20 +103,44 @@ function styles() {
 }
 
 function build() {
+  const revisionedAssets = [
+    'css/style.min.css',
+    'js/app.js',
+    'blocks/projects/projects-scroll.js',
+  ];
+  const versions = Object.fromEntries(revisionedAssets.map((asset) => [
+    asset,
+    createHash('sha256').update(readFileSync(path.join('app', asset))).digest('hex').slice(0, 12),
+  ]));
+
   return src(
     [
       "app/css/**/*",           // Все файлы из папки css
       "app/fonts/**/*",
       "app/js/**/*",            // Все файлы из папки js
+      "app/blocks/**/*.js",      // Скрипты изолированных блоков
       "app/*.html",
     ],
     { base: "app" }
-  ).pipe(dest("dist"));
+  ).pipe(new Transform({
+    objectMode: true,
+    transform(file, encoding, callback) {
+      if (path.extname(file.path) === '.html' && file.isBuffer()) {
+        const html = file.contents.toString().replace(
+          /((?:href|src)=["'])(css\/style\.min\.css|js\/app\.js|blocks\/projects\/projects-scroll\.js)(?:\?v=[^"']*)?(["'])/g,
+          (match, prefix, asset, quote) => `${prefix}${asset}?v=${versions[asset]}${quote}`
+        );
+        file.contents = Buffer.from(html);
+      }
+      callback(null, file);
+    },
+  })).pipe(dest("dist"));
 }
 
 function watching() {
-  watch(["app/scss/**/*.scss"], styles);
+  watch(["app/scss/**/*.scss", "app/blocks/**/*.scss"], styles);
   watch(["app/js/**/*.js", "!app/js/main.min.js"], scripts);
+  watch(["app/blocks/**/*.js"]).on("change", browserSync.reload);
   watch(["app/*.html"]).on("change", browserSync.reload);
 }
 
@@ -117,5 +151,5 @@ exports.scripts = scripts;
 exports.images = images;
 exports.cleanDist = cleanDist;
 
-exports.build = series(cleanDist, images, build);
+exports.build = series(styles, cleanDist, images, build);
 exports.default = parallel(styles, scripts, browsersync, watching);

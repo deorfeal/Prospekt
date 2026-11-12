@@ -14,6 +14,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Инициализация слоёв скролла
     ScrollLayers.init();
 
+    // Проекты: pinned-переходы на desktop, навигация стрелками на mobile
+    ProjectsScroll.init();
+
     // Инициализация компонентов (попапы)
     Components.init();
 
