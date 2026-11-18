@@ -3,6 +3,10 @@
  * Смена проектов: ScrollTrigger на desktop и кнопки на mobile.
  */
 
+// "classic" — исходная, "simple" — проявление по скроллу,
+// "stepped" — один жест запускает полный переход к следующей работе.
+const PROJECTS_ANIMATION = "stepped";
+
 const ProjectsScroll = {
   media: null,
   timeline: null,
@@ -16,11 +20,22 @@ const ProjectsScroll = {
   skipHandler: null,
   skipTween: null,
   cancelSkipScroll: null,
+  cancelSkipScene: null,
+  skipToLast: null,
 
   init() {
     const section = $(".projects");
 
     if (!section) return;
+    const initialScroll = window.scrollY;
+    const initialNaturalTop = section.getBoundingClientRect().top;
+    section.classList.toggle("projects--simple", PROJECTS_ANIMATION !== "classic");
+    // До создания pin-spacer последняя часть закреплённой секции ещё не
+    // существует в документе. Измеряем положение с учётом итоговой раскладки.
+    const initialPinTop = section.getBoundingClientRect().top + window.scrollY - initialScroll;
+    let initialViewport = initialPinTop < window.innerHeight && initialPinTop + window.innerHeight > 0
+      ? { top: initialPinTop, inside: initialNaturalTop <= 0 }
+      : null;
 
     const loadDeferredImages = () => {
       $$("img[data-project-src]", section).forEach((image) => {
@@ -67,14 +82,8 @@ const ProjectsScroll = {
 
       this.cancelSkipScroll?.();
 
-      const targetY = window.scrollY + nextBlock.getBoundingClientRect().top;
-      const scrollPosition = { y: window.scrollY };
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-      if (reduceMotion) {
-        window.scrollTo({ top: targetY, behavior: "instant" });
-        return;
-      }
+      let cancelled = false;
 
       const cancelOnKey = (keyEvent) => {
         if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(keyEvent.key)) {
@@ -82,8 +91,11 @@ const ProjectsScroll = {
         }
       };
       this.cancelSkipScroll = () => {
+        cancelled = true;
         this.skipTween?.kill();
         this.skipTween = null;
+        this.cancelSkipScene?.();
+        this.cancelSkipScene = null;
         window.removeEventListener("wheel", this.cancelSkipScroll);
         window.removeEventListener("touchstart", this.cancelSkipScroll);
         window.removeEventListener("keydown", cancelOnKey);
@@ -93,13 +105,27 @@ const ProjectsScroll = {
       window.addEventListener("touchstart", this.cancelSkipScroll, { passive: true });
       window.addEventListener("keydown", cancelOnKey);
 
-      this.skipTween = gsap.to(scrollPosition, {
-        y: targetY,
-        duration: 1.2,
-        ease: "power2.inOut",
-        onUpdate: () => window.scrollTo({ top: scrollPosition.y, behavior: "instant" }),
-        onComplete: () => this.cancelSkipScroll?.(),
-      });
+      const scrollToNextBlock = () => {
+        if (cancelled) return;
+        this.cancelSkipScene = null;
+        const targetY = window.scrollY + nextBlock.getBoundingClientRect().top;
+        if (reduceMotion) {
+          window.scrollTo({ top: targetY, behavior: "instant" });
+          this.cancelSkipScroll?.();
+          return;
+        }
+
+        const scrollPosition = { y: window.scrollY };
+        this.skipTween = gsap.to(scrollPosition, {
+          y: targetY,
+          duration: 1.2,
+          ease: "power2.inOut",
+          onUpdate: () => window.scrollTo({ top: scrollPosition.y, behavior: "instant" }),
+          onComplete: () => this.cancelSkipScroll?.(),
+        });
+      };
+
+      if (!this.skipToLast?.(scrollToNextBlock)) scrollToNextBlock();
     };
     this.elements.skipLink?.addEventListener("click", this.skipHandler);
 
@@ -139,11 +165,16 @@ const ProjectsScroll = {
     this.setProgress(0);
 
     this.media = gsap.matchMedia();
-    this.media.add("(min-width: 768px)", () => this.initDesktop());
+    this.media.add("(min-width: 768px)", () => {
+      if (PROJECTS_ANIMATION === "stepped") return this.initDesktopStepped(initialViewport);
+      if (PROJECTS_ANIMATION === "simple") return this.initDesktopSimple();
+      return this.initDesktopClassic();
+    });
     this.media.add("(max-width: 767px)", () => this.initMobile());
+    initialViewport = null;
   },
 
-  initDesktop() {
+  initDesktopClassic() {
     const { section, items, titles, artworks, artworkLayers } = this.elements;
     const stones = artworkLayers.flatMap((layer) => layer.stones);
     const desks = artworkLayers.map((layer) => layer.desk).filter(Boolean);
@@ -324,6 +355,406 @@ const ProjectsScroll = {
       timeline.scrollTrigger?.kill();
       timeline.kill();
       items[activeIndex]?.classList.remove("is-active");
+      stones.forEach((stone) => {
+        stone.style.removeProperty("--project-burst-x");
+        stone.style.removeProperty("--project-burst-y");
+      });
+      gsap.set([...items, ...titles, ...artworks, ...stones, ...desks, ...mobs, ...lights], {
+        clearProps: "transform,opacity,visibility",
+      });
+    };
+  },
+
+  initDesktopSimple() {
+    const { section, items, titles, artworks, artworkLayers } = this.elements;
+    const stones = artworkLayers.flatMap((layer) => layer.stones);
+    const desks = artworkLayers.map((layer) => layer.desk).filter(Boolean);
+    const mobs = artworkLayers.map((layer) => layer.mob).filter(Boolean);
+    const lights = artworkLayers.map((layer) => layer.light).filter(Boolean);
+    const getArtworkScale = () => window.innerWidth <= 1200 ? 0.65 : 1;
+    let visibleIndex = -1;
+    let activeIndex = -1;
+    let preloadedIndex = -1;
+
+    gsap.set(items, { autoAlpha: 1 });
+    gsap.set(artworks, { yPercent: -50, autoAlpha: 1, scale: getArtworkScale() });
+    gsap.set(titles, { yPercent: 0, autoAlpha: 0 });
+    gsap.set([...desks, ...mobs], { yPercent: 0, scale: 1, autoAlpha: 0 });
+    gsap.set(stones, { yPercent: 0, scale: 1, autoAlpha: 0 });
+    gsap.set(titles[0], { autoAlpha: 1 });
+    gsap.set([artworkLayers[0].desk, artworkLayers[0].mob, ...artworkLayers[0].stones], { autoAlpha: 1 });
+    this.setProgress(0);
+
+    const timeline = gsap.timeline({
+      defaults: { ease: "none" },
+      scrollTrigger: {
+        id: "projects-scroll",
+        trigger: section,
+        start: "top top",
+        end: () => `+=${window.innerHeight * (items.length - 1) * 1.2}`,
+        pin: true,
+        scrub: 0.5,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        onUpdate: (trigger) => {
+          const targetIndex = Math.min(items.length - 1, Math.round(trigger.progress * (items.length - 1)));
+          if ((trigger.isActive || trigger.progress > 0) && targetIndex !== preloadedIndex) {
+            this.preloadNearby(targetIndex);
+            preloadedIndex = targetIndex;
+          }
+        },
+        onRefresh: () => {
+          gsap.set(artworks, { scale: getArtworkScale() });
+          if (activeIndex >= 0) this.setBurstDirections(artworkLayers[activeIndex]);
+        },
+      },
+    });
+
+    items.slice(0, -1).forEach((_item, index) => {
+      const current = artworkLayers[index];
+      const next = artworkLayers[index + 1];
+
+      // Устройства остаются на месте. Новая работа и её декор мягко проявляются
+      // поверх предыдущей; обратный скролл воспроизводит тот же переход назад.
+      timeline.to(titles[index], { autoAlpha: 0, duration: 0.45 }, index);
+      timeline.to([current.desk, current.mob, ...current.stones], { autoAlpha: 0, duration: 0.7 }, index + 0.3);
+      timeline.to([next.desk, next.mob], { autoAlpha: 1, duration: 0.7 }, index);
+      timeline.to(next.stones, { autoAlpha: 1, duration: 0.65 }, index + 0.18);
+      timeline.to(titles[index + 1], { autoAlpha: 1, duration: 0.45 }, index + 0.4);
+    });
+
+    const syncActiveItem = () => {
+      const time = timeline.time();
+      const sceneIndex = Math.min(items.length - 1, Math.floor(time));
+      const nextActive = Math.min(items.length - 1, Math.floor(time + 0.5));
+
+      if (sceneIndex !== visibleIndex) {
+        items.forEach((item, index) => {
+          item.style.visibility = index === sceneIndex || index === sceneIndex + 1 ? "visible" : "hidden";
+        });
+        visibleIndex = sceneIndex;
+      }
+
+      if (nextActive !== activeIndex) {
+        items[activeIndex]?.classList.remove("is-active");
+        activeIndex = nextActive;
+        this.setProgress(activeIndex);
+        this.setBurstDirections(artworkLayers[activeIndex]);
+        items[activeIndex].classList.add("is-active");
+      }
+    };
+    timeline.eventCallback("onUpdate", syncActiveItem);
+    syncActiveItem();
+    this.timeline = timeline;
+
+    return () => {
+      if (this.timeline === timeline) this.timeline = null;
+      timeline.scrollTrigger?.kill();
+      timeline.kill();
+      items[activeIndex]?.classList.remove("is-active");
+      stones.forEach((stone) => {
+        stone.style.removeProperty("--project-burst-x");
+        stone.style.removeProperty("--project-burst-y");
+      });
+      gsap.set([...items, ...titles, ...artworks, ...stones, ...desks, ...mobs, ...lights], {
+        clearProps: "transform,opacity,visibility",
+      });
+    };
+  },
+
+  initDesktopStepped(initialViewport) {
+    const { section, items, titles, artworks, artworkLayers } = this.elements;
+    const stones = artworkLayers.flatMap((layer) => layer.stones);
+    const desks = artworkLayers.map((layer) => layer.desk).filter(Boolean);
+    const mobs = artworkLayers.map((layer) => layer.mob).filter(Boolean);
+    const lights = artworkLayers.map((layer) => layer.light).filter(Boolean);
+    const getArtworkScale = () => window.innerWidth <= 1200 ? 0.65 : 1;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let currentIndex = 0;
+    let transition = null;
+    let loading = false;
+    let alive = true;
+    let loadToken = 0;
+    let lastWheelTime = 0;
+    let pendingDirection = 0;
+    let restoreRaf = 0;
+
+    gsap.set(artworks, { yPercent: -50, autoAlpha: 1, scale: getArtworkScale() });
+
+    const showScene = (index) => {
+      currentIndex = Math.max(0, Math.min(items.length - 1, index));
+      gsap.set(items, { autoAlpha: 0 });
+      gsap.set(titles, { yPercent: 0, autoAlpha: 0 });
+      gsap.set([...desks, ...mobs, ...stones], { yPercent: 0, scale: 1, autoAlpha: 0 });
+      gsap.set(lights, { autoAlpha: 0, scale: 1 });
+      const layer = artworkLayers[currentIndex];
+      gsap.set(items[currentIndex], { autoAlpha: 1 });
+      gsap.set(titles[currentIndex], { yPercent: 0, autoAlpha: 1 });
+      gsap.set([layer.desk, layer.mob, ...layer.stones], { yPercent: 0, scale: 1, autoAlpha: 1 });
+      items.forEach((item, itemIndex) => item.classList.toggle("is-active", itemIndex === currentIndex));
+      this.setProgress(currentIndex);
+      this.preloadNearby(currentIndex);
+      this.setBurstDirections(layer);
+    };
+
+    const cancelTransition = () => {
+      loadToken += 1;
+      loading = false;
+      pendingDirection = 0;
+      transition?.kill();
+      transition = null;
+    };
+
+    const pin = ScrollTrigger.create({
+      id: "projects-scroll",
+      trigger: section,
+      start: "top top",
+      end: () => `+=${window.innerHeight}`,
+      pin: true,
+      anticipatePin: 1,
+      onEnter: () => {
+        if (!this.skipTween) {
+          lastWheelTime = performance.now();
+          showScene(0);
+        }
+      },
+      onEnterBack: () => {
+        if (!this.skipTween) {
+          lastWheelTime = performance.now();
+          showScene(items.length - 1);
+        }
+      },
+      onLeave: () => {
+        cancelTransition();
+        showScene(items.length - 1);
+      },
+      onLeaveBack: () => {
+        cancelTransition();
+        showScene(0);
+      },
+      onRefresh: () => {
+        gsap.set(artworks, { scale: getArtworkScale() });
+        this.setBurstDirections(artworkLayers[currentIndex]);
+      },
+    });
+
+    // При восстановлении браузером прокрутки pin-spacer меняет высоту документа,
+    // и scroll anchoring может сдвинуть страницу за конец блока.
+    // Восстанавливаем положение только если Projects был виден при инициализации.
+    const restoreInitialPosition = () => {
+      if (!alive || !initialViewport) return;
+      const desired = initialViewport.inside
+        ? Math.min(pin.start + Math.max(2, -initialViewport.top), pin.end - 2)
+        : pin.start - initialViewport.top;
+      window.scrollTo({ top: Math.max(0, desired), behavior: "instant" });
+      ScrollTrigger.update();
+    };
+
+    if (initialViewport) {
+      restoreInitialPosition();
+      showScene(0);
+      restoreRaf = requestAnimationFrame(() => {
+        restoreRaf = 0;
+        pin.refresh();
+        restoreInitialPosition();
+        showScene(0);
+      });
+    } else {
+      showScene(pin.progress >= 1 ? items.length - 1 : 0);
+    }
+
+    const goTo = (nextIndex, direction) => {
+      const previousIndex = currentIndex;
+      const current = artworkLayers[previousIndex];
+      const next = artworkLayers[nextIndex];
+      const token = ++loadToken;
+      loading = true;
+      this.preloadNearby(nextIndex);
+
+      this.loadProject(nextIndex).then(() => {
+        if (!alive || token !== loadToken || !pin.isActive) return;
+        loading = false;
+        items[previousIndex].classList.remove("is-active");
+        gsap.set(items[nextIndex], { autoAlpha: 1 });
+
+        if (reduceMotion.matches) {
+          showScene(nextIndex);
+          return;
+        }
+
+        if (direction > 0) {
+          gsap.set(titles[nextIndex], { yPercent: 185, autoAlpha: 0 });
+          gsap.set(next.desk, { yPercent: 26, autoAlpha: 0, scale: 0.96 });
+          gsap.set(next.mob, { yPercent: 38, autoAlpha: 0, scale: 0.94 });
+          gsap.set(next.stones, {
+            yPercent: (stoneIndex) => 70 + ((stoneIndex * 29) % 90),
+            autoAlpha: 0,
+            scale: 0.88,
+          });
+        } else {
+          gsap.set(titles[nextIndex], { yPercent: 0, autoAlpha: 0 });
+          gsap.set([next.desk, next.mob, ...next.stones], { yPercent: 0, scale: 1, autoAlpha: 0 });
+        }
+
+        transition = gsap.timeline({
+          onComplete: () => {
+            transition = null;
+            showScene(nextIndex);
+            const pending = pendingDirection;
+            pendingDirection = 0;
+            if (pending && pin.isActive && !this.skipTween) step(pending);
+          },
+        });
+
+        if (direction > 0) {
+          transition.to(titles[previousIndex], { yPercent: -185, autoAlpha: 0, duration: 0.45, ease: "power2.in" }, 0);
+          transition.to(current.desk, { yPercent: -14, autoAlpha: 0, scale: 0.98, duration: 0.5, ease: "power2.in" }, 0);
+          transition.to(current.mob, { yPercent: -24, autoAlpha: 0, scale: 0.96, duration: 0.45, ease: "power2.in" }, 0.07);
+          transition.to(current.stones, {
+            yPercent: (stoneIndex) => -70 - ((stoneIndex * 23) % 80),
+            autoAlpha: 0,
+            scale: (stoneIndex) => 0.86 + (stoneIndex % 3) * 0.035,
+            duration: (stoneIndex) => 0.37 + (stoneIndex % 4) * 0.07,
+            stagger: { each: 0.02, from: "end" },
+            ease: "power2.in",
+          }, 0.2);
+          transition.to(next.desk, { yPercent: 0, autoAlpha: 1, scale: 1, duration: 0.62, ease: "power2.out" }, 0.3);
+          transition.to(next.mob, { yPercent: 0, autoAlpha: 1, scale: 1, duration: 0.55, ease: "power2.out" }, 0.4);
+          transition.to(next.stones, {
+            yPercent: 0,
+            autoAlpha: 1,
+            scale: 1,
+            duration: (stoneIndex) => 0.48 + (stoneIndex % 4) * 0.07,
+            stagger: { each: 0.025, from: "start" },
+            ease: "power2.out",
+          }, 0.48);
+          transition.to(titles[nextIndex], { yPercent: 0, autoAlpha: 1, duration: 0.55, ease: "power2.out" }, 0.38);
+          transition.call(() => this.setProgress(nextIndex), null, 0.55);
+          transition.call(() => {
+            this.setBurstDirections(next);
+            items[nextIndex].classList.add("is-active");
+          }, null, 0.92);
+        } else {
+          transition.to([titles[previousIndex], current.desk, current.mob, ...current.stones], { autoAlpha: 0, duration: 0.5, ease: "power1.inOut" }, 0);
+          transition.to([titles[nextIndex], next.desk, next.mob, ...next.stones], { autoAlpha: 1, duration: 0.55, ease: "power1.out" }, 0.1);
+          transition.call(() => this.setProgress(nextIndex), null, 0.3);
+          transition.call(() => {
+            this.setBurstDirections(next);
+            items[nextIndex].classList.add("is-active");
+          }, null, 0.48);
+        }
+      });
+    };
+
+    const skipToLast = (onComplete) => {
+      if (!pin.isActive) return false;
+      const lastIndex = items.length - 1;
+      if (currentIndex === lastIndex && !transition && !loading) {
+        onComplete();
+        return true;
+      }
+
+      cancelTransition();
+      const token = ++loadToken;
+      loading = true;
+      this.cancelSkipScene = () => {
+        cancelTransition();
+        if (alive) showScene(currentIndex);
+      };
+      this.preloadNearby(lastIndex);
+      this.loadProject(lastIndex).then(() => {
+        if (!alive || token !== loadToken || !pin.isActive) return;
+        loading = false;
+        if (reduceMotion.matches) {
+          showScene(lastIndex);
+          onComplete();
+          return;
+        }
+
+        const last = artworkLayers[lastIndex];
+        const visibleItems = items.filter((item, index) =>
+          index !== lastIndex && getComputedStyle(item).visibility !== "hidden",
+        );
+        items.forEach((item) => item.classList.remove("is-active"));
+        gsap.set(items[lastIndex], { autoAlpha: 0 });
+        gsap.set(titles[lastIndex], { yPercent: 0, autoAlpha: 1 });
+        gsap.set([last.desk, last.mob, ...last.stones], { yPercent: 0, scale: 1, autoAlpha: 1 });
+
+        transition = gsap.timeline({
+          onComplete: () => {
+            transition = null;
+            showScene(lastIndex);
+            onComplete();
+          },
+        });
+        transition.to(visibleItems, { autoAlpha: 0, duration: 0.5, ease: "power1.inOut" }, 0);
+        transition.to(items[lastIndex], { autoAlpha: 1, duration: 0.55, ease: "power1.out" }, 0.1);
+        transition.call(() => this.setProgress(lastIndex), null, 0.3);
+        transition.to({}, { duration: 0.2 });
+      });
+      return true;
+    };
+    this.skipToLast = skipToLast;
+
+    const step = (direction) => {
+      if (loading) return;
+      if (transition) {
+        // Если новый жест пришёл в конце сборки, выполним его сразу после неё.
+        if (transition.progress() >= 0.75) pendingDirection = direction;
+        return;
+      }
+      const nextIndex = currentIndex + direction;
+      if (nextIndex < 0 || nextIndex >= items.length) {
+        window.scrollTo({ top: direction > 0 ? pin.end + 2 : Math.max(0, pin.start - 2), behavior: "instant" });
+        return;
+      }
+      goTo(nextIndex, direction);
+    };
+
+    const onWheel = (event) => {
+      if (this.cancelSkipScroll || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+      if (!pin.isActive) {
+        const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1);
+        const target = window.scrollY + delta;
+        const entersForward = window.scrollY < pin.start && target >= pin.start;
+        const entersBack = window.scrollY > pin.end && target <= pin.end;
+        if (entersForward || entersBack) {
+          event.preventDefault();
+          lastWheelTime = performance.now();
+          window.scrollTo({ top: entersForward ? pin.start + 2 : pin.end - 2, behavior: "instant" });
+        }
+        return;
+      }
+      event.preventDefault();
+      const now = performance.now();
+      const isNewGesture = now - lastWheelTime > 100;
+      lastWheelTime = now;
+      if (isNewGesture && Math.abs(event.deltaY) > 1) step(event.deltaY > 0 ? 1 : -1);
+    };
+
+    const onKeyDown = (event) => {
+      if (!pin.isActive || this.cancelSkipScroll || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.target.closest("input, textarea, select, button, a, [contenteditable]")) return;
+      const direction = event.key === "ArrowDown" || event.key === "PageDown" || (event.key === " " && !event.shiftKey)
+        ? 1
+        : event.key === "ArrowUp" || event.key === "PageUp" || (event.key === " " && event.shiftKey) ? -1 : 0;
+      if (!direction) return;
+      event.preventDefault();
+      if (!event.repeat) step(direction);
+    };
+
+    window.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      alive = false;
+      if (this.skipToLast === skipToLast) this.skipToLast = null;
+      cancelAnimationFrame(restoreRaf);
+      cancelTransition();
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("keydown", onKeyDown);
+      pin.kill();
+      items.forEach((item) => item.classList.remove("is-active"));
       stones.forEach((stone) => {
         stone.style.removeProperty("--project-burst-x");
         stone.style.removeProperty("--project-burst-y");
